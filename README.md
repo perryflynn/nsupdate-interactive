@@ -9,6 +9,7 @@ a HMAC key and `nsupdate`.
 - `dig`
 - `nsupdate`
 - `diff`
+- `named-checkzone`
 - A HMAC key which is allowed to perform `update` and `transfer` to a DNS zone
 
 ## How it work
@@ -18,8 +19,8 @@ HMAC=hmac-sha256:my-awesome-keyname:THEKEYINBASE64FORMAT
 ./nsupdate-interactive.py --dnsserver ns1.example.com --zone example.com
 ```
 
-The script will now generate a "delete all and add all again" batch file
-for `nsupdate` and will open it in `$EDITOR` (fallback is `nano`).
+The script will now generate a pretty formatted zone file and will
+open it in `$EDITOR`  (fallback is `nano`).
 
 After saving the file it will show a diff:
 
@@ -38,6 +39,7 @@ After saving the file it will show a diff:
 ```
 
 If the diff is approved with hitting `ENTER`, the script will use
-`nsupdate` to execute the updates on the nameserver.
+the diff to generate a `nsupdate` batch file and send it to
+the nameserver.
 
 The patch is saved as a file in the current working directory.
