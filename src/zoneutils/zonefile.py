@@ -1,4 +1,5 @@
 import re
+from typing import Union
 
 RESOURCE_CLASSES = [ 'ANY', 'IN', 'CH', 'HS', 'CS' ]
 RESOURCE_TYPE_RGX = re.compile(r"^[A-Z0-9]+$")
@@ -33,7 +34,9 @@ class Record(object):
         if self.dnsClass not in RESOURCE_CLASSES:
             raise ZoneRecordSyntaxError(f'{self.dnsClass} is not a valid record class')
 
-    def as_array(self):
+    def as_array(self) -> list:
+        """ Get record as list """
+
         return [
             self.dnsName,
             self.dnsTtl,
@@ -43,40 +46,46 @@ class Record(object):
             self.dnsContent
         ]
 
-    def get_by_index(self, index):
+    def get_by_index(self, index: int) -> Union[int, str]:
+        """ Get record field by index """
+
         if index >= 0 and index < len(self.as_array()):
             return self.as_array()[index]
 
         return None
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """ Convert record data back into a zone file record """
+
         prio = ' '+self.dnsPrio if self.dnsPrio else ''
         return f'{self.dnsName} {self.dnsTtl} {self.dnsClass} {self.dnsType}{prio} {self.dnsContent}'
 
-    @staticmethod
-    def from_string(recordstr):
-        match = RECORD_WITHPRIO_RGX.match(recordstr)
 
-        if match is None:
-            match = RECORD_RGX.match(recordstr)
+def from_string(recordstr: str) -> Record:
+    """ Create record from zone file line """
 
-        if match:
-            return Record(
-                dnsName=match.group('host'),
-                dnsTtl=int(match.group('ttl')),
-                dnsClass=match.group('class'),
-                dnsType=match.group('type'),
-                dnsPrio=int(match.group('prio')) if 'prio' in match.groupdict().keys() else None,
-                dnsContent=match.group('content')
-            )
+    match = RECORD_WITHPRIO_RGX.match(recordstr)
 
-        return None
+    if match is None:
+        match = RECORD_RGX.match(recordstr)
+
+    if match:
+        return Record(
+            dnsName=match.group('host'),
+            dnsTtl=int(match.group('ttl')),
+            dnsClass=match.group('class'),
+            dnsType=match.group('type'),
+            dnsPrio=int(match.group('prio')) if 'prio' in match.groupdict().keys() else None,
+            dnsContent=match.group('content')
+        )
+
+    return None
 
 
 class ZoneFile:
     """ Represents all records from a AXFR query executed by dig """
 
-    def __init__(self, zonefilestr):
+    def __init__(self, zonefilestr: str):
         self.digversion = None
         self.nameserver = None
         self.zone = None
@@ -92,7 +101,7 @@ class ZoneFile:
 
         soa = False
         for line in zonefilestr.split('\n'):
-            r = Record.from_string(line)
+            r = from_string(line)
 
             if r and (soa == False or r.dnsType != 'SOA'):
                 self.records.append(r)

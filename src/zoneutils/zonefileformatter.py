@@ -1,3 +1,6 @@
+from typing import Iterator, List, Tuple
+from zoneutils import zonefile
+
 class ZoneFileFormatter:
 
     def __init__(self):
@@ -6,7 +9,7 @@ class ZoneFileFormatter:
         self.header = [ '; Name', 'TTL', 'Class', 'Type', 'Prio', 'Content' ]
         self.separator = '    '
 
-    def format(self, zonefile):
+    def format(self, zonefile: str) -> Iterator[str]:
         """ Prettify a zone file """
 
         lengths = self._get_columnlengths(zonefile)
@@ -32,14 +35,14 @@ class ZoneFileFormatter:
         yield ''
         yield ';; EOF'
 
-    def _record_sorter(self, x, record_prio):
+    def _record_sorter(self, x: zonefile.Record, record_prio: List[str]) -> Tuple[str, int, int]:
         reversename = '.'.join(x.dnsName.split('.')[::-1])
         typeprio = record_prio.index(x.dnsType)
         dnsprio = x.dnsPrio if x.dnsPrio else 0
 
         return (reversename, typeprio, dnsprio)
 
-    def _get_record_priorities(self, zonefile):
+    def _get_record_priorities(self, zonefile: str) -> List[str]:
         """ Define sorting priority for record types """
 
         record_prio = [ 'SOA', 'NS', 'CAA', 'A', 'AAAA', 'MX', 'SRV' ]
@@ -50,7 +53,7 @@ class ZoneFileFormatter:
         return record_prio
 
 
-    def _get_groups(self, zonefile):
+    def _get_groups(self, zonefile: str) -> List[dict]:
         """ Group records in zone file by 3rd level domains """
 
         groups = []
@@ -72,7 +75,7 @@ class ZoneFileFormatter:
 
         return groups
 
-    def _get_columnlengths(self, zonefile, includeheader=True):
+    def _get_columnlengths(self, zonefile: str, includeheader: bool = True) -> List[int]:
         """ Get largest string for each column """
 
         columnlengths = [  ]
@@ -86,7 +89,7 @@ class ZoneFileFormatter:
 
         return columnlengths
 
-    def _format_line(self, widths, record):
+    def _format_line(self, widths: List[int], record: zonefile.Record) -> str:
         """ Write padded record into the batch file """
 
         line = ''

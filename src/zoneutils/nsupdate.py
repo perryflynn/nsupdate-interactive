@@ -1,13 +1,14 @@
 from zoneutils import zonefile
+from typing import List, Iterator
 
 class NsUpdate:
     """ Generate nsupdate batch files """
 
-    def __init__(self, add=[], delete=[]):
+    def __init__(self, add: List[zonefile.Record] = [], delete: List[zonefile.Record] = []):
         self.add = add
         self.delete = delete
 
-    def get_nsupdate_batch(self, nameserver, zone):
+    def get_nsupdate_batch(self, nameserver: str, zone: str) -> Iterator[str]:
         """ Create a nsupdate batch file """
 
         yield '; nsupdate batch file'
@@ -22,19 +23,18 @@ class NsUpdate:
         yield ''
         yield '; EOF'
 
-    @staticmethod
-    def from_diff(diff, addchar='+', delchar='-'):
-        """ Create changeset from a zone file diff """
+def from_diff(diff: str, addchar: str = '> ', delchar: str = '< ') -> NsUpdate:
+    """ Create changeset from a zone file diff """
 
-        add = []
-        delete = []
+    add = []
+    delete = []
 
-        for line in diff.split('\n'):
-            line = line.strip()
-            if len(line) > 1:
-                if line[0] == addchar:
-                    add.append(zonefile.Record.from_string(line[1:]))
-                elif line[0] == delchar:
-                    delete.append(zonefile.Record.from_string(line[1:]))
+    for line in diff.split('\n'):
+        line = line.strip()
+        if len(line) > 1:
+            if line.startswith(delchar):
+                delete.append(zonefile.from_string(line[len(delchar):]))
+            elif line.startswith(addchar):
+                add.append(zonefile.from_string(line[len(addchar):]))
 
-        return NsUpdate(add, delete)
+    return NsUpdate(add, delete)

@@ -22,7 +22,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def check_dependencies(editor):
+def check_dependencies(editor: str):
     """ Check for binaries which are required for this script """
 
     binaries = [ editor, 'nsupdate', 'dig', 'diff', 'named-checkzone' ]
@@ -36,7 +36,7 @@ def check_dependencies(editor):
         sys.exit(1)
 
 
-def press(what):
+def press(what: str):
     input(f"Press ENTER to {what}, CTRL+C to abort.")
 
 
@@ -115,7 +115,7 @@ def main():
 
     # create nsupdate batch file
     minidiff = utils.diff_minimal(filename.format('org'), filename.format('new'))[1]
-    nsupdater = nsupdate.NsUpdate.from_diff(minidiff)
+    nsupdater = nsupdate.from_diff(minidiff)
     nsupdatestr = '\n'.join(list(nsupdater.get_nsupdate_batch(args.dnsserver, args.zone)))
 
     with open(filename.format('batch'), 'w+') as f:
