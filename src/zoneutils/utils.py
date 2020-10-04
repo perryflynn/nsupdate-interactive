@@ -22,7 +22,7 @@ def dig_zonetransfer(ns: str, hmac: str, zone: str) -> Tuple[bool, str]:
 def diff(file1: str, file2: str) -> Tuple[bool, str]:
     """ Diff two text files """
 
-    cmd = [ 'diff', '-Nau', file1, file2 ]
+    cmd = [ 'diff', '--ignore-space-change', '--suppress-common-lines', '-Nau', file1, file2 ]
     proc = create_process(cmd)
 
     return (proc.returncode == 1, proc.stdout.decode('UTF-8-sig'))
@@ -30,10 +30,16 @@ def diff(file1: str, file2: str) -> Tuple[bool, str]:
 def diff_minimal(file1: str, file2: str) -> Tuple[bool, str]:
     """ Diff two text files and shows just the changed lines """
 
-    cmd = [ 'diff', file1, file2 ]
+    cmd = [ 'diff', '--ignore-space-change', '--suppress-common-lines', file1, file2 ]
     proc = create_process(cmd)
 
     return (proc.returncode == 1, proc.stdout.decode('UTF-8-sig'))
+
+def colorize_diff(diffstr: str) -> Tuple[bool, str]:
+    """ Colorize a diff """
+
+    proc = subprocess.run(['colordiff'], stdout=subprocess.PIPE, input=diffstr, encoding='UTF-8-sig')
+    return (proc.returncode == 0, proc.stdout)
 
 def checkzone(zone: str, file: str) -> Tuple[bool, str]:
     """ Check syntax of a zone file """

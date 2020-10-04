@@ -25,7 +25,7 @@ def parse_args():
 def check_dependencies(editor: str):
     """ Check for binaries which are required for this script """
 
-    binaries = [ editor, 'nsupdate', 'dig', 'diff', 'named-checkzone' ]
+    binaries = [ editor, 'nsupdate', 'dig', 'diff', 'colordiff', 'named-checkzone' ]
     binarymissing = False
     for binary in binaries:
         if shutil.which(binary) is None:
@@ -114,7 +114,7 @@ def main():
         formatter.save(filename.format('new'), newrecords)
         diffresult = utils.diff(filename.format('org'), filename.format('new'))
 
-    print(diffresult[1])
+    print(utils.colorize_diff(diffresult[1])[1])
 
     # write diff into a patch file
     with open(filename.format('patch'), 'w+') as f:
