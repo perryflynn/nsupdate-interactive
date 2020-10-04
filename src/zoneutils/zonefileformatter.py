@@ -2,14 +2,15 @@ from typing import Iterator, List, Tuple
 from zoneutils import zonefile
 
 class ZoneFileFormatter:
+    """ Creates a prettified zone file """
 
     def __init__(self):
         self.columns = 6
-        self.columnalign = [ 1, -1, 1, 1, -1, 0 ]
+        self.columnalign = [ 1, 1, 1, 1, 1, 0 ]
         self.header = [ '; Name', 'TTL', 'Class', 'Type', 'Prio', 'Content' ]
         self.separator = '    '
 
-    def format(self, zonefile: str) -> Iterator[str]:
+    def format(self, zonefile: zonefile.ZoneFile) -> Iterator[str]:
         """ Prettify a zone file """
 
         lengths = self._get_columnlengths(zonefile)
@@ -35,14 +36,21 @@ class ZoneFileFormatter:
         yield ''
         yield ';; EOF'
 
+    def save(self, file, zonefile: zonefile.ZoneFile):
+        with open(file, 'w+') as f:
+            for line in self.format(zonefile):
+                f.write(f'{line}\n')
+
     def _record_sorter(self, x: zonefile.Record, record_prio: List[str]) -> Tuple[str, int, int]:
+        """ Sorting rule for the records in the zone file """
+
         reversename = '.'.join(x.dnsName.split('.')[::-1])
         typeprio = record_prio.index(x.dnsType)
         dnsprio = x.dnsPrio if x.dnsPrio else 0
 
         return (reversename, typeprio, dnsprio)
 
-    def _get_record_priorities(self, zonefile: str) -> List[str]:
+    def _get_record_priorities(self, zonefile: zonefile.ZoneFile) -> List[str]:
         """ Define sorting priority for record types """
 
         record_prio = [ 'SOA', 'NS', 'CAA', 'A', 'AAAA', 'MX', 'SRV' ]
@@ -53,7 +61,7 @@ class ZoneFileFormatter:
         return record_prio
 
 
-    def _get_groups(self, zonefile: str) -> List[dict]:
+    def _get_groups(self, zonefile: zonefile.ZoneFile) -> List[dict]:
         """ Group records in zone file by 3rd level domains """
 
         groups = []
@@ -75,7 +83,7 @@ class ZoneFileFormatter:
 
         return groups
 
-    def _get_columnlengths(self, zonefile: str, includeheader: bool = True) -> List[int]:
+    def _get_columnlengths(self, zonefile: zonefile.ZoneFile, includeheader: bool = True) -> List[int]:
         """ Get largest string for each column """
 
         columnlengths = [  ]

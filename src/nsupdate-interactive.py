@@ -72,14 +72,11 @@ def main():
 
     records = zonefile.ZoneFile(digstr[1])
 
-    # create zone textfile
+    # create zone files for diff and editing
     formatter = zonefileformatter.ZoneFileFormatter()
-    with open(filename.format('org'), 'w+') as f:
-        for line in formatter.format(records):
-            f.write(f'{line}\n')
 
-    # create a working copy
-    shutil.copyfile(filename.format('org'), filename.format('new'))
+    for version in [ 'org', 'new' ]:
+        formatter.save(filename.format(version), records)
 
     # edit and check syntax
     haserrors = True
@@ -103,6 +100,19 @@ def main():
         os.remove(filename.format('org'))
         os.remove(filename.format('new'))
         sys.exit(0)
+
+    # update soa serial
+    originalsoa = zonefile.SoaRecord(next(filter(lambda x: x.dnsType=='SOA', records.records)))
+    newrecords = zonefile.load(filename.format('new'))
+    editedsoa = zonefile.SoaRecord(next(filter(lambda x: x.dnsType=='SOA', newrecords.records)))
+
+    if originalsoa == editedsoa:
+        # update serial with the classic date format
+        editedsoa.apply_default_serialincrease()
+
+        # write zone file and redo diff
+        formatter.save(filename.format('new'), newrecords)
+        diffresult = utils.diff(filename.format('org'), filename.format('new'))
 
     print(diffresult[1])
 
