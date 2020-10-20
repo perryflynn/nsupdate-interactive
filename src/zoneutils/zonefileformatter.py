@@ -13,6 +13,9 @@ class ZoneFileFormatter:
     def format(self, zonefile: zonefile.ZoneFile) -> Iterator[str]:
         """ Prettify a zone file """
 
+        if len(zonefile.records) < 1:
+            return None
+
         lengths = self._get_columnlengths(zonefile)
 
         yield f'; <<>> DiG {zonefile.digversion} <<>> @{zonefile.nameserver} -t AXFR {zonefile.zone}'
@@ -36,10 +39,21 @@ class ZoneFileFormatter:
         yield ''
         yield ';; EOF'
 
-    def save(self, file, zonefile: zonefile.ZoneFile):
+    def save(self, file, zonefile: zonefile.ZoneFile) -> int:
+        """ Save zonefile as file """
+
+        lines = self.format(zonefile)
+
+        if lines is None:
+            return 0
+
+        linecount = 0
         with open(file, 'w+') as f:
-            for line in self.format(zonefile):
+            for line in lines:
                 f.write(f'{line}\n')
+                linecount += 1
+
+        return linecount
 
     def _record_sorter(self, x: zonefile.Record, record_prio: List[str]) -> Tuple[str, int, int]:
         """ Sorting rule for the records in the zone file """

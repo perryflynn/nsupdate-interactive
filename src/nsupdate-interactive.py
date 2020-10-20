@@ -65,12 +65,30 @@ def main():
 
     # get zone records by calling dig
     digstr = utils.dig_zonetransfer(args.dnsserver, hmackey, args.zone)
-    if digstr[0] == False:
+
+    if digstr[2] == utils.ZonetransferResult.KEYINVALID:
+        print(digstr[1])
+        print("Invalid HMAC key provided or HMAC key was denied by DNS server.")
+        sys.exit(1)
+    elif digstr[2] == utils.ZonetransferResult.FAILED:
+        print(digstr[1])
+        print("Transfer failed.")
+        print("Maybe a typo in zone name or dns server address?")
+        print("Or the HMAC don't have the permission to access the given dns zone.")
+        sys.exit(1)
+    elif digstr[0] == False:
         print("dig failed:")
         print(digstr[1])
         sys.exit(1)
 
     records = zonefile.ZoneFile(digstr[1])
+
+    if len(records.records) < 1:
+        print("Unable to find any records in the DNS zone.")
+        print("There must be at least a SOA record.")
+        print("Maybe a typo in the zone name or dns server address?")
+        print("Or something wrong with your permissions?")
+        sys.exit(1)
 
     # create zone files for diff and editing
     formatter = zonefileformatter.ZoneFileFormatter()

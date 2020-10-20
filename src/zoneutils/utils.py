@@ -1,5 +1,15 @@
 import subprocess
 from typing import Tuple
+from enum import Enum
+import re
+
+TSIG_EXISTS_RGX = re.compile(r"^\s*[^\s]+\s+[^\s]+\s+ANY\s+TSIG\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+NOERROR\s+[^\s]+\s*$", re.M)
+TRANSFER_FAILED_RGX = re.compile(r"^\s*;\s+Transfer\s+failed.\s*$", re.M)
+
+class ZonetransferResult(Enum):
+    OK = 0,
+    KEYINVALID = 1,
+    FAILED = 2
 
 def create_process(cmd: str) -> subprocess.CompletedProcess:
     """ Execute a command """
@@ -10,14 +20,23 @@ def create_process(cmd: str) -> subprocess.CompletedProcess:
         stderr=subprocess.STDOUT
     )
 
-def dig_zonetransfer(ns: str, hmac: str, zone: str) -> Tuple[bool, str]:
+def dig_zonetransfer(ns: str, hmac: str, zone: str) -> Tuple[bool, str, ZonetransferResult]:
     """ Perform zone transfer to get the full list of all records in the zone """
 
     cmd = [ 'dig', '@'+ns, '-y', hmac, '-t', 'AXFR', zone ]
     proc = create_process(cmd)
     diglines = proc.stdout.decode('UTF-8-sig')
 
-    return (proc.returncode == 0, diglines)
+    # check for errors
+    result = ZonetransferResult.OK
+
+    if not TSIG_EXISTS_RGX.search(diglines):
+        result = ZonetransferResult.KEYINVALID
+
+    elif TRANSFER_FAILED_RGX.search(diglines):
+        result = ZonetransferResult.FAILED
+
+    return (proc.returncode == 0 and result == ZonetransferResult.OK, diglines, result)
 
 def diff(file1: str, file2: str) -> Tuple[bool, str]:
     """ Diff two text files """
