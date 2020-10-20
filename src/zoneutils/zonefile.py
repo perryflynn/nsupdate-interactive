@@ -109,7 +109,7 @@ class SoaRecord(object):
             datepart = str(self.soaSerial)[0:8]
             serialdate = datetime.strptime(datepart, '%Y%m%d').replace(tzinfo=timezone.utc)
 
-            if (now - serialdate).total_seconds() < 86400 * 365 * 5 and todaystr != datepart:
+            if now >= serialdate and (now - serialdate).total_seconds() < 86400 * 365 * 5 and todaystr != datepart:
                 self.soaSerial = int(f'{todaystr}00')
         except Exception:
             pass

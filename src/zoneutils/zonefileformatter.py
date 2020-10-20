@@ -16,26 +16,34 @@ class ZoneFileFormatter:
         if len(zonefile.records) < 1:
             return None
 
+        # get maximum lengths for each column
         lengths = self._get_columnlengths(zonefile)
 
+        # header
         yield f'; <<>> DiG {zonefile.digversion} <<>> @{zonefile.nameserver} -t AXFR {zonefile.zone}'
         yield ''
 
+        yield self._format_line(lengths, self.header)
+
+        # group and sort records by second level name
         record_groups = self._get_groups(zonefile)
         record_prio = self._get_record_priorities(zonefile)
         records = sorted(zonefile.records, key=lambda x: self._record_sorter(x, record_prio))
 
-        yield self._format_line(lengths, self.header)
-
+        # records
         previous_group = None
         for record in records:
             group = next(filter(lambda x: record.dnsName in x['items'], record_groups))['mapname']
+
+            # newline between record groups
             if previous_group is not None and group != previous_group:
                 yield ''
 
+            # print record
             yield self._format_line(lengths, record.as_array())
             previous_group = group
 
+        # footer
         yield ''
         yield ';; EOF'
 

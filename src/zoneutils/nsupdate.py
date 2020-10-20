@@ -11,7 +11,10 @@ class NsUpdate:
     def get_nsupdate_batch(self, nameserver: str, zone: str) -> Iterator[str]:
         """ Create a nsupdate batch file """
 
+        # SOA records must not be deleted
         itemsdelete = filter(lambda x: x.dnsType != 'SOA', self.delete)
+
+        # SOA records always as the last operation
         itemsadd = sorted(self.add, key=lambda x: 1 if x.dnsType == 'SOA' else 0)
 
         yield '; nsupdate batch file'
@@ -36,10 +39,12 @@ def from_diff(diff: str, addchar: str = '> ', delchar: str = '< ') -> NsUpdate:
     for line in diff.split('\n'):
         line = line.strip()
         if len(line) > 1:
+            # delete requests
             if line.startswith(delchar):
                 temp = zonefile.from_string(line[len(delchar):])
                 if temp:
                     delete.append(temp)
+            # create requests
             elif line.startswith(addchar):
                 temp = zonefile.from_string(line[len(addchar):])
                 if temp:
