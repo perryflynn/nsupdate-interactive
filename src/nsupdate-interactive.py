@@ -17,7 +17,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='ExDiff')
 
     parser.add_argument('--zone', type=str, required=True)
-    parser.add_argument('--dnsserver', type=str, required=True)
+    parser.add_argument('--dnsserver', type=str, required=False)
 
     return parser.parse_args()
 
@@ -58,6 +58,17 @@ def main():
 
     # parse arguments
     args = parse_args()
+
+    # find nameserver if no one is defined
+    if not args.dnsserver:
+        args.dnsserver = utils.dig_get_authoritative_server(args.zone)
+
+        if args.dnsserver:
+            print(f"Found dns server by SOA record: {args.dnsserver}")
+        else:
+            print("There was no '--dnsserver' option defined and we are unable")
+            print("to find the authoritative name server by SOA record.")
+            sys.exit(1)
 
     # base filename
     ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'Z'

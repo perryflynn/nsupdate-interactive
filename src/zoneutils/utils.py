@@ -2,6 +2,7 @@ import subprocess
 from typing import Tuple
 from enum import Enum
 import re
+from zoneutils import zonefile
 
 TSIG_EXISTS_RGX = re.compile(r"^\s*[^\s]+\s+[^\s]+\s+ANY\s+TSIG\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+NOERROR\s+[^\s]+\s*$", re.M)
 TRANSFER_FAILED_RGX = re.compile(r"^\s*;\s+Transfer\s+failed.\s*$", re.M)
@@ -19,6 +20,24 @@ def create_process(cmd: str) -> subprocess.CompletedProcess:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT
     )
+
+def dig_get_authoritative_server(zone: str) -> str:
+    """ Get domains authoritative name server by SOA record """
+
+    cmd = [ 'dig', '-t', 'SOA', zone ]
+    proc = create_process(cmd)
+    diglines = proc.stdout.decode('UTF-8-sig')
+
+    if proc.returncode == 0:
+        # find SOA record and return primary DNS server
+        records = zonefile.ZoneFile(diglines)
+        rawsoa = list(filter(lambda x: x.dnsType == 'SOA', records.records))
+
+        if len(rawsoa) > 0:
+            soa = zonefile.SoaRecord(rawsoa[0])
+            return soa.soaPrimaryDns
+
+    return None
 
 def dig_zonetransfer(ns: str, hmac: str, zone: str) -> Tuple[bool, str, ZonetransferResult]:
     """ Perform zone transfer to get the full list of all records in the zone """
