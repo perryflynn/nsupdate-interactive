@@ -25,6 +25,19 @@ On Debian `named-checkzone` is located in `/usr/sbin`. As normal user
 you need to add the path to your `$PATH` variable or create a synlink
 in `/usr/bin` so that the Shell and the Tool can find the executable.
 
+## Parameters
+
+```txt
+usage: nsupdate-interactive.py [-h] --zone ZONE [--dnsserver DNSSERVER]
+
+nsupdate-interactive
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --zone ZONE
+  --dnsserver DNSSERVER
+```
+
 ## How it work
 
 ```sh

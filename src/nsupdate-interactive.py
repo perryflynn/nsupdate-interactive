@@ -14,7 +14,7 @@ from zoneutils import zonefile, zonefileformatter, nsupdate, utils
 def parse_args():
     """ Parse command line arguments """
 
-    parser = argparse.ArgumentParser(description='ExDiff')
+    parser = argparse.ArgumentParser(description='nsupdate-interactive')
 
     parser.add_argument('--zone', type=str, required=True)
     parser.add_argument('--dnsserver', type=str, required=False)
@@ -49,15 +49,15 @@ def main():
     # check for dependend programs
     check_dependencies(editor)
 
+    # parse arguments
+    args = parse_args()
+
     # get hmac key
     hmackey = os.environ.get('HMAC')
 
     if hmackey is None:
         print("Environment variable 'HMAC' is required.")
         sys.exit(1)
-
-    # parse arguments
-    args = parse_args()
 
     # find nameserver if no one is defined
     if not args.dnsserver:
