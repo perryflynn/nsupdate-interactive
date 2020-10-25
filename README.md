@@ -9,18 +9,32 @@ a HMAC key and `nsupdate`.
 - `dig`
 - `nsupdate`
 - `diff`
+- `colordiff`
 - `named-checkzone`
 - A HMAC key which is allowed to perform `update` and `transfer` to a DNS zone
+
+### Install packages on Ubuntu
+
+```sh
+apt install dnsutils diffutils colordiff bind9utils
+```
+
+### `named-checkzone` was not found but package is installed
+
+On Debian `named-checkzone` is located in `/usr/sbin`. As normal user
+you need to add the path to your `$PATH` variable or create a synlink
+in `/usr/bin` so that the Shell and the Tool can find the executable.
 
 ## How it work
 
 ```sh
 HMAC=hmac-sha256:my-awesome-keyname:THEKEYINBASE64FORMAT
-./nsupdate-interactive.py --dnsserver ns1.example.com --zone example.com
+./nsupdate-interactive.py --zone example.com
 ```
 
-The script will now generate a pretty formatted zone file and will
-open it in `$EDITOR`  (fallback is `nano`).
+The script will detect the authoritative name server of the specified
+zone by its SOA record and will generate a pretty formatted zone file.
+The file will be opened in `$EDITOR` (fallback is `nano`) afterwards.
 
 After saving the file it will show a diff:
 
@@ -42,4 +56,5 @@ If the diff is approved with hitting `ENTER`, the script will use
 the diff to generate a `nsupdate` batch file and send it to
 the nameserver.
 
-The patch is saved as a file in the current working directory.
+The diff and the generated nsupdate batch file are saved as text files
+in the current working directory.
