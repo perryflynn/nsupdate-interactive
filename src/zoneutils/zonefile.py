@@ -60,7 +60,7 @@ class Record(object):
     def __str__(self) -> str:
         """ Convert record data back into a zone file record """
 
-        prio = ' '+self.dnsPrio if self.dnsPrio else ''
+        prio = ' '+str(self.dnsPrio) if self.dnsPrio else ''
         return f'{self.dnsName} {self.dnsTtl} {self.dnsClass} {self.dnsType}{prio} {self.dnsContent}'
 
     def __eq__(self, other):
