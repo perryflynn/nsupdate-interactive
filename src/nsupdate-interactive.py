@@ -11,12 +11,18 @@ import datetime
 from zoneutils import zonefile, zonefileformatter, nsupdate, utils
 
 
+SLUG_RGX = re.compile(r"[^a-zA-Z0-9_]")
+
+
 def parse_args():
     """ Parse command line arguments """
 
     parser = argparse.ArgumentParser(description='nsupdate-interactive')
 
-    parser.add_argument('--zone', type=str, required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--zone', type=str)
+    group.add_argument('--get-zone-slug', type=str)
+
     parser.add_argument('--dnsserver', type=str, required=False)
 
     return parser.parse_args()
@@ -36,6 +42,11 @@ def check_dependencies(editor: str):
         sys.exit(1)
 
 
+def domain_slugify(domain: str) -> str:
+    idn = domain.encode('idna').decode('utf-8-sig')
+    return SLUG_RGX.sub('_', idn).upper().strip()
+
+
 def press(what: str):
     input(f"Press ENTER to {what}, CTRL+C to abort.")
 
@@ -52,8 +63,14 @@ def main():
     # parse arguments
     args = parse_args()
 
+    # print domain slug
+    if args.get_zone_slug:
+        print(f"HMAC_{domain_slugify(args.get_zone_slug)}")
+        sys.exit(0)
+
     # get hmac key
-    hmackey = os.environ.get('HMAC')
+    zone_varname = f"HMAC_{domain_slugify(args.zone)}"
+    hmackey = os.environ.get('HMAC', os.environ.get(zone_varname))
 
     if hmackey is None:
         print("Environment variable 'HMAC' is required.")
@@ -85,7 +102,7 @@ def main():
         print(digstr[1])
         print("Transfer failed.")
         print("Maybe a typo in zone name or dns server address?")
-        print("Or the HMAC don't have the permission to access the given dns zone.")
+        print("Or the HMAC doesn't have the permission to access the given dns zone.")
         sys.exit(1)
     elif digstr[0] == False:
         print("dig failed:")

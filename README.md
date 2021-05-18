@@ -38,6 +38,28 @@ optional arguments:
   --dnsserver DNSSERVER
 ```
 
+## Multiple HMAC Keys
+
+Define multiple HMAC keys as environment variables as follows:
+
+```sh
+./src/nsupdate-interactive.py --get-zone-slug hüpf.net
+HMAC_XN__HPF_HOA_NET
+./src/nsupdate-interactive.py --get-zone-slug serverless.industries
+HMAC_SERVERLESS_INDUSTRIES
+```
+
+```sh
+export HMAC_XN__HPF_HOA_NET=hmac-sha256:my-huepfnet-keyname:THEKEYINBASE64FORMAT
+export HMAC_SERVERLESS_INDUSTRIES=hmac-sha256:my-serverless-keyname:THEKEYINBASE64FORMAT
+```
+
+Then the script will check automatically for a per-domain HMAC key:
+
+```sh
+./nsupdate-interactive.py --zone nerdbridge.de
+```
+
 ## How it work
 
 ```sh
