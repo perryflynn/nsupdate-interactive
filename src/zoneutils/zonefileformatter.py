@@ -4,17 +4,21 @@ from zoneutils import zonefile
 class ZoneFileFormatter:
     """ Creates a prettified zone file """
 
-    def __init__(self):
+    def __init__(self, ignore_rrtypes: List[str] = []):
         self.columns = 6
         self.columnalign = [ 1, 1, 1, 1, 1, 0 ]
         self.header = [ '; Name', 'TTL', 'Class', 'Type', 'Prio', 'Content' ]
         self.separator = '    '
+        self.ignore_rrtypes = ignore_rrtypes
 
     def format(self, zonefile: zonefile.ZoneFile) -> Iterator[str]:
         """ Prettify a zone file """
 
         if len(zonefile.records) < 1:
             return None
+
+        # filter out RR types to ignore
+        zonefile.records = list(filter(lambda x: x.dnsType not in self.ignore_rrtypes, zonefile.records))
 
         # get maximum lengths for each column
         lengths = self._get_columnlengths(zonefile)

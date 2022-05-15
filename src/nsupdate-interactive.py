@@ -8,22 +8,36 @@ import subprocess
 import shlex
 import shutil
 import datetime
+import textwrap
 from zoneutils import zonefile, zonefileformatter, nsupdate, utils
+from pprint import pprint
 
 
 SLUG_RGX = re.compile(r"[^a-zA-Z0-9_]")
+DEFAULT_IGNORE_RRTYPES = [ 'DNSKEY', 'RRSIG', 'NSEC', 'TYPE65534' ]
 
 
 def parse_args():
     """ Parse command line arguments """
 
-    parser = argparse.ArgumentParser(description='nsupdate-interactive')
+    parser = argparse.ArgumentParser(
+        description='nsupdate-interactive', 
+        formatter_class=argparse.RawDescriptionHelpFormatter, 
+        epilog=textwrap.dedent(f'''\
+            Per default, the following RR types will be ignored:
+            {', '.join(DEFAULT_IGNORE_RRTYPES)}
+
+            Author: Christian Blechert <christian@serverless.industries>
+            Website: https://github.com/perryflynn/nsupdate-interactive
+            ''')
+        )
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--zone', type=str)
-    group.add_argument('--get-zone-slug', type=str)
-
-    parser.add_argument('--dnsserver', type=str, required=False)
+    group.add_argument('--zone', type=str, help='The zone name', metavar='example.com')
+    group.add_argument('--get-zone-slug', type=str, help='Slugify a zone name for hmac key envs', metavar='example.com')
+    
+    parser.add_argument('--dnsserver', type=str, required=False, help='DNS server to use', metavar='ns1.example.com')
+    parser.add_argument('--ignore-rrtype', action='append', required=False, help='Ignore RR types, can be used multiple times', metavar='RRSIG')
 
     return parser.parse_args()
 
@@ -63,6 +77,12 @@ def main():
     # parse arguments
     args = parse_args()
 
+    # ignore rrtypes default
+    if (not args.ignore_rrtype) or len(args.ignore_rrtype) < 1:
+        args.ignore_rrtype = DEFAULT_IGNORE_RRTYPES
+
+    args.ignore_rrtype = list(map(lambda x: x.upper().strip(), args.ignore_rrtype))
+
     # print domain slug
     if args.get_zone_slug:
         print(f"HMAC_{domain_slugify(args.get_zone_slug)}")
@@ -89,7 +109,7 @@ def main():
 
     # base filename
     ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'Z'
-    filename = 'nsupdate_'+args.dnsserver+'_'+args.zone+'_'+ts+'.{0}.db'
+    filename = 'nsupdate_'+utils.sanitize_for_filesystem(args.dnsserver)+'_'+utils.sanitize_for_filesystem(args.zone)+'_'+ts+'.{0}.db'
 
     # get zone records by calling dig
     digstr = utils.dig_zonetransfer(args.dnsserver, hmackey, args.zone)
@@ -119,7 +139,7 @@ def main():
         sys.exit(1)
 
     # create zone files for diff and editing
-    formatter = zonefileformatter.ZoneFileFormatter()
+    formatter = zonefileformatter.ZoneFileFormatter(args.ignore_rrtype)
 
     for version in [ 'org', 'new' ]:
         formatter.save(filename.format(version), records)

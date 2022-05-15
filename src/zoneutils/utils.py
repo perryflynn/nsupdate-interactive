@@ -6,6 +6,7 @@ from zoneutils import zonefile
 
 TSIG_EXISTS_RGX = re.compile(r"^\s*[^\s]+\s+[^\s]+\s+ANY\s+TSIG\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+NOERROR\s+[^\s]+\s*$", re.M)
 TRANSFER_FAILED_RGX = re.compile(r"^\s*;\s+Transfer\s+failed.\s*$", re.M)
+ILLEGAL_PATH_CHARS_RGX = r"[/<>:\"\\|?*]"
 
 class ZonetransferResult(Enum):
     OK = 0,
@@ -94,3 +95,18 @@ def nsupdate(hmac: str, filename: str) -> Tuple[bool, str]:
     proc = create_process(cmd)
 
     return ( proc.returncode == 0, proc.stdout.decode('UTF-8-sig'))
+
+def sanitize_for_filesystem(instr: str) -> str:
+    """ Clean string from invalid path characters """
+    # https://stackoverflow.com/a/31976060/4161736
+    # https://www.adamsmith.haus/python/answers/how-to-strip-non-printable-characters-from-a-string-in-python
+    
+    temp = ''.join(list(s for s in instr if s.isprintable()))
+    temp = re.sub(ILLEGAL_PATH_CHARS_RGX, '_', temp)
+
+    while '__' in temp:
+        temp = temp.replace('__', '_')
+
+    temp = temp.strip("\n\r\t _.")
+
+    return temp
