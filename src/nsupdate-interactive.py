@@ -14,7 +14,7 @@ from pprint import pprint
 
 
 SLUG_RGX = re.compile(r"[^a-zA-Z0-9_]")
-DEFAULT_IGNORE_RRTYPES = [ 'DNSKEY', 'RRSIG', 'NSEC', 'TYPE65534' ]
+DEFAULT_IGNORE_RRTYPES = [ 'DNSKEY', 'RRSIG', 'NSEC', 'TYPE65534', 'CDS', 'CDNSKEY' ]
 
 
 def parse_args():
