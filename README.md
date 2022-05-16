@@ -28,14 +28,23 @@ in `/usr/bin` so that the Shell and the Tool can find the executable.
 ## Parameters
 
 ```txt
-usage: nsupdate-interactive.py [-h] --zone ZONE [--dnsserver DNSSERVER]
+usage: nsupdate-interactive.py [-h] (--zone example.com | --get-zone-slug example.com) [--dnsserver ns1.example.com]
+                               [--ignore-rrtype RRSIG]
 
 nsupdate-interactive
 
 optional arguments:
   -h, --help            show this help message and exit
-  --zone ZONE
-  --dnsserver DNSSERVER
+  --zone example.com    The zone name
+  --get-zone-slug example.com
+                        Slugify a zone name for hmac key envs
+  --dnsserver ns1.example.com
+                        DNS server to use
+  --ignore-rrtype RRSIG
+                        Ignore RR types, can be used multiple times
+
+Per default, the following RR types will be ignored:
+DNSKEY, RRSIG, NSEC, TYPE65534, CDS, CDNSKEY
 ```
 
 ## Multiple HMAC Keys
@@ -54,7 +63,7 @@ export HMAC_XN__HPF_HOA_NET=hmac-sha256:my-huepfnet-keyname:THEKEYINBASE64FORMAT
 export HMAC_SERVERLESS_INDUSTRIES=hmac-sha256:my-serverless-keyname:THEKEYINBASE64FORMAT
 ```
 
-Then the script will check automatically for a per-domain HMAC key:
+Then the script will look automatically for a per-domain HMAC key:
 
 ```sh
 ./nsupdate-interactive.py --zone nerdbridge.de
