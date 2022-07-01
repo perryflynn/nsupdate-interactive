@@ -88,7 +88,7 @@ After saving the file it will show a diff:
 @@ -49,7 +49,7 @@
  ;; Create new records
  ;; Feel free to add/modify records here
- update add                  example.com.   900  IN  TXT   "v=spf1 +mx -all"google-site-verification=5ECgluHXymBbxokW9gKrMnEg2ivJapBp6b-28Dwz5bQ
+ update add                  sinarprakasa.com.   86400  IN  TXT   "v=spf1 +mx -all"google-site-verification=5ECgluHXymBbxokW9gKrMnEg2ivJapBp6b-28Dwz5bQ
 -update add                  example.com.   900  IN  TXT   "Hello Nerds, how are you going?"
 +update add                  example.com.   900  IN  TXT   "Hello Nerds, how are you going? :-)"
  update add                  example.com.  3600  IN  MX    10 example.com.
